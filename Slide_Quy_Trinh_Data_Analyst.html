@@ -9,7 +9,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     :root {
       --slide-opacity: 0.90;
-      --slide-blur: 24px;
+      --slide-blur: 16px;
       --hue-rotate: 0deg;
       --subcard-opacity: 0.88;
     }
@@ -17,11 +17,11 @@
     body {
       margin: 0;
       min-height: 100vh;
-      filter: hue-rotate(var(--hue-rotate, 0deg));
       background-color: #200c04;
       color: #fff7ed;
       overflow: hidden;
-      transition: filter 0.2s ease, background 0.3s ease;
+      transform: translateZ(0);
+      -webkit-font-smoothing: antialiased;
     }
     .sweep-overlay {
       position: fixed;
@@ -41,43 +41,48 @@
         90deg,
         transparent 0%,
         rgba(251, 146, 60, 0.03) 30%,
-        rgba(254, 215, 170, 0.09) 48%,
-        rgba(255, 237, 213, 0.14) 50%,
-        rgba(254, 215, 170, 0.09) 52%,
+        rgba(254, 215, 170, 0.08) 48%,
+        rgba(255, 237, 213, 0.12) 50%,
+        rgba(254, 215, 170, 0.08) 52%,
         rgba(251, 146, 60, 0.03) 70%,
         transparent 100%
       );
-      transform: rotate(20deg);
-      animation: slideSweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      transform: translate3d(0, 0, 0) rotate(20deg);
+      will-change: transform;
+      animation: slideSweep 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
     @keyframes slideSweep {
-      0% { transform: translateX(-30vw) rotate(20deg); opacity: 0; }
-      15% { opacity: 1; }
-      85% { opacity: 1; }
-      100% { transform: translateX(175vw) rotate(20deg); opacity: 0; }
+      0% { transform: translate3d(-30vw, 0, 0) rotate(20deg); opacity: 0; }
+      15% { opacity: 0.7; }
+      85% { opacity: 0.7; }
+      100% { transform: translate3d(175vw, 0, 0) rotate(20deg); opacity: 0; }
     }
     .slide-card {
       background: linear-gradient(145deg, rgba(29, 38, 82, var(--slide-opacity, 0.86)) 0%, rgba(18, 24, 56, calc(var(--slide-opacity, 0.86) + 0.06)) 100%);
-      backdrop-filter: blur(var(--slide-blur, 24px)) saturate(160%);
-      -webkit-backdrop-filter: blur(var(--slide-blur, 24px)) saturate(160%);
+      backdrop-filter: blur(var(--slide-blur, 16px)) saturate(140%);
+      -webkit-backdrop-filter: blur(var(--slide-blur, 16px)) saturate(140%);
       border: 1px solid rgba(165, 180, 252, 0.28);
-      box-shadow: 0 24px 64px -12px rgba(7, 10, 28, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      box-shadow: 0 20px 50px -10px rgba(7, 10, 28, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
     .sub-card {
       background: linear-gradient(145deg, rgba(22, 30, 68, var(--subcard-opacity, 0.85)) 0%, rgba(15, 21, 48, calc(var(--subcard-opacity, 0.85) + 0.05)) 100%);
       border: 1px solid rgba(129, 140, 248, 0.26);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transform: translateZ(0);
     }
     .slide-item {
       display: none;
-      animation: slideFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: slideFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: opacity, transform;
     }
     .slide-item.active {
       display: flex;
     }
     @keyframes slideFadeIn {
-      0% { opacity: 0; transform: translateY(16px) scale(0.985); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
+      0% { opacity: 0; transform: translate3d(0, 10px, 0); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0); }
     }
     body.edit-mode .slide-item *[contenteditable="true"] {
       outline: 1px dashed rgba(56, 189, 248, 0.35);
@@ -1001,7 +1006,7 @@
       const hueVal = document.getElementById('hueVal');
       if (hueSlider) hueSlider.value = 0;
       if (hueVal) hueVal.textContent = '0° (Gốc)';
-      document.documentElement.style.setProperty('--hue-rotate', '0deg');
+      document.body.style.filter = '';
       try { localStorage.setItem('slide_hue', 0); } catch(e) {}
     }
 
@@ -1019,7 +1024,7 @@
       if (hueSlider) {
         hueSlider.addEventListener('input', (e) => {
           const val = e.target.value;
-          document.documentElement.style.setProperty('--hue-rotate', `${val}deg`);
+          document.body.style.filter = (val == 0) ? '' : `hue-rotate(${val}deg)`;
           const valEl = document.getElementById('hueVal');
           if (valEl) valEl.textContent = val == 0 ? '0° (Gốc)' : `${val}°`;
           try { localStorage.setItem('slide_hue', val); } catch(e) {}
@@ -1060,9 +1065,11 @@
         const savedHue = localStorage.getItem('slide_hue');
         if (savedHue !== null && hueSlider) {
           hueSlider.value = savedHue;
-          document.documentElement.style.setProperty('--hue-rotate', `${savedHue}deg`);
+          document.body.style.filter = (savedHue == 0) ? '' : `hue-rotate(${savedHue}deg)`;
           const valEl = document.getElementById('hueVal');
           if (valEl) valEl.textContent = savedHue == 0 ? '0° (Gốc)' : `${savedHue}°`;
+        } else {
+          document.body.style.filter = '';
         }
 
         const savedOp = localStorage.getItem('slide_opacity');
