@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slide Thuyết Trình Quy Trình Phân Tích & Quy Tắc Làm Sạch Dữ Liệu — Data Analyst</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: #101530;
+      background-image:
+        radial-gradient(circle at 14% 18%, rgba(99, 102, 241, 0.45) 0%, transparent 46%),
+        radial-gradient(circle at 86% 20%, rgba(14, 165, 233, 0.40) 0%, transparent 48%),
+        radial-gradient(circle at 50% 52%, rgba(124, 58, 237, 0.30) 0%, transparent 56%),
+        radial-gradient(circle at 20% 84%, rgba(20, 184, 166, 0.32) 0%, transparent 48%),
+        linear-gradient(135deg, #0e132e 0%, #171d44 50%, #0d2238 100%);
+      color: #f1f5f9;
+      overflow: hidden;
+    }
+    .sweep-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .sweep-overlay::before {
+      content: "";
+      position: absolute;
+      top: -60%;
+      left: -40%;
+      width: 26%;
+      height: 240%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(56, 189, 248, 0.03) 30%,
+        rgba(129, 140, 248, 0.09) 48%,
+        rgba(186, 230, 253, 0.14) 50%,
+        rgba(129, 140, 248, 0.09) 52%,
+        rgba(56, 189, 248, 0.03) 70%,
+        transparent 100%
+      );
+      transform: rotate(20deg);
+      animation: slideSweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes slideSweep {
+      0% { transform: translateX(-30vw) rotate(20deg); opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translateX(175vw) rotate(20deg); opacity: 0; }
+    }
+    .slide-card {
+      background: linear-gradient(145deg, rgba(29, 38, 82, 0.86) 0%, rgba(18, 24, 56, 0.92) 100%);
+      backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(165, 180, 252, 0.28);
+      box-shadow: 0 24px 64px -12px rgba(7, 10, 28, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+    .sub-card {
+      background: linear-gradient(145deg, rgba(22, 30, 68, 0.85) 0%, rgba(15, 21, 48, 0.90) 100%);
+      border: 1px solid rgba(129, 140, 248, 0.26);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .slide-item {
+      display: none;
+      animation: slideFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .slide-item.active {
+      display: flex;
+    }
+    @keyframes slideFadeIn {
+      0% { opacity: 0; transform: translateY(16px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media print {
+      body { overflow: visible !important; height: auto !important; }
+      .slide-item { display: flex !important; page-break-after: always; min-height: 92vh; margin-bottom: 24px; }
+      .no-print, .sweep-overlay { display: none !important; }
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between h-screen p-3 sm:p-5 md:p-7 select-none">
+  <div class="sweep-overlay"></div>
+
+  <!-- Top Presentation Bar -->
+  <header class="no-print relative z-20 flex flex-wrap items-center justify-between gap-3 px-5 py-2.5 rounded-full slide-card">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
+        <i class="fa-solid fa-chart-simple"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm sm:text-base font-extrabold tracking-tight text-slate-100">Data Analyst</span>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">SLIDE THUYẾT TRÌNH WORKFLOW</span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">Phân tích chi tiết Quy trình 5 Bước · Quy tắc Làm sạch Dữ liệu · Kiểm định Chất lượng</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Slide Dots -->
+      <div id="slideDots" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#111836]/80 border border-indigo-400/25"></div>
+      <span id="slideCounter" class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-xs font-extrabold text-cyan-300">Slide 1 / 8</span>
+      <button onclick="window.print()" class="px-3.5 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/80 transition cursor-pointer flex items-center gap-1.5" title="In toàn bộ Slide ra PDF">
+        <i class="fa-solid fa-print text-cyan-300"></i> <span class="hidden sm:inline">In / PDF</span>
+      </button>
+      <button onclick="toggleFullScreen()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition cursor-pointer flex items-center gap-1.5">
+        <i class="fa-solid fa-expand"></i> <span class="hidden sm:inline">Toàn màn hình</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Slide Stage -->
+  <main class="relative z-10 flex-1 my-3 sm:my-4 flex items-stretch overflow-hidden">
+
+    <!-- ================= SLIDE 1: TRANG BÌA ================= -->
+    <section class="slide-item active slide-card w-full rounded-[28px] p-6 sm:p-10 md:p-14 flex-col justify-between overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-xs font-bold text-cyan-300 tracking-wide uppercase">
+          <i class="fa-solid fa-layer-group mr-1.5"></i> Tài Liệu Kiến Trúc &amp; Quy Trình Nghiệp Vụ
+        </span>
+        <span class="text-xs text-slate-400 font-mono">Gemini 2.5 Flash · Multi-Stage Agent</span>
+      </div>
+
+      <div class="my-auto py-6 max-w-4xl">
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight text-white">
+          Quy Trình Hoạt Động <br/>
+          <span class="bg-gradient-to-r from-cyan-300 via-indigo-300 to-purple-300 bg-clip-text text-transparent">
+            Data Analyst — Nhà Phân Tích Dữ Liệu
+          </span>
+        </h1>
+        <p class="mt-5 text-sm sm:text-lg text-slate-300 leading-relaxed max-w-3xl">
+          Hệ thống phân tích dữ liệu đa nguồn tự động hóa theo <b>5 bước tuần tự (Multi-Stage Workflow)</b> kết hợp <b>3 cổng xác nhận người dùng (Confirmation Gates)</b>, bộ quy tắc <b>Làm sạch &amp; Kiểm định chất lượng dữ liệu nghiêm ngặt</b> và mô hình trí tuệ nhân tạo <b>Google Gemini 2.5 Flash</b>.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-cyan-400">
+            <div class="text-xs font-bold text-cyan-300 uppercase">Quy Trình Chuẩn Hóa</div>
+            <div class="text-xl font-extrabold text-white mt-1">5 Bước &amp; 3 Gate</div>
+            <p class="text-xs text-slate-400 mt-1">Kiểm soát chặt chẽ từ dữ liệu thô đầu vào đến khi xuất báo cáo cuối cùng.</p>
+          </div>
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-emerald-400">
+            <div class="text-xs font-bold text-emerald-300 uppercase">Làm Sạch Tự Động</div>
+            <div class="text-xl font-extrabold text-white mt-1">6 Quy Tắc Cốt Lõi</div>
+            <p class="text-xs text-slate-400 mt-1">Khử trùng lặp, chuẩn hóa tiền tệ/thời gian, điền khuyết Median &amp; lọc ngoại lai IQR.</p>
+          </div>
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-purple-400">
+            <div class="text-xs font-bold text-purple-300 uppercase">Đa Định Dạng Xuất</div>
+            <div class="text-xl font-extrabold text-white mt-1">HTML · MD · Slide · CSV</div>
+            <p class="text-xs text-slate-400 mt-1">Đồng bộ 100% số liệu thực tế kèm Trợ lý AI Copilot trực tuyến xuyên suốt.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-indigo-400/20 text-xs text-slate-400">
+        <span>Doanh nghiệp đang nạp: <b class="text-cyan-300">Công ty Cổ phần Bán Lẻ & Thời Trang Tân Tiến</b> (Bán lẻ đa kênh (Omnichannel))</span>
+        <span>Sử dụng phím mũi tên <b>← / →</b> hoặc nút bên dưới để chuyển Slide</span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 2: TỔNG QUAN LUỒNG WORKFLOW 5 BƯỚC ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider">
+          <span>Slide 02 / 08</span> · <span>Kiến Trúc Tổng Thể</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Sơ Đồ Quy Trình Làm Việc 5 Bước (End-to-End Workflow)</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1">Mỗi bước đều có cơ chế khóa an toàn (Step Lock) và cổng xác nhận của người dùng trước khi chuyển tiếp.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3.5 my-auto py-4">
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-indigo-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[11px] font-extrabold">BƯỚC 1</span>
+            <h3 class="text-base font-extrabold text-white mt-2">Dữ Liệu &amp; Bối Cảnh</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li>Nhập Tên DN, Ngành nghề, Mục tiêu &amp; Câu hỏi kinh doanh.</li>
+              <li>Tải file Excel/CSV, dán link Google Sheet hoặc nạp Dữ liệu mẫu.</li>
+              <li>Xem trước trực tiếp bảng dữ liệu ngay tại Bước 1.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-indigo-400/20 text-[11px] text-indigo-300 font-bold">→ Chuyển kiểm định nguồn</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-sky-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[11px] font-extrabold">BƯỚC 2</span>
+            <h3 class="text-base font-extrabold text-white mt-2">Kiểm Tra Nguồn (Validate)</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li>Kiểm tra cấu trúc bảng, số dòng, số cột và định dạng tệp.</li>
+              <li>Nhận diện danh sách trường thông tin.</li>
+              <li>Hiển thị 5 dòng dữ liệu thô đầu tiên để đối chiếu.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-sky-400/20 text-[11px] text-sky-300 font-bold">✓ Confirmation Gate 1</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-emerald-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold">BƯỚC 3</span>
+            <h3 class="text-base font-extrabold text-white mt-2">Làm Sạch &amp; Kiểm Định</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li>Thực thi 6 quy tắc làm sạch tự động (Data Cleaning).</li>
+              <li>Chấm điểm chất lượng dữ liệu (Data Quality Audit).</li>
+              <li>Báo cáo dòng trùng, ô khuyết &amp; ngoại lai (IQR).</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-emerald-400/20 text-[11px] text-emerald-300 font-bold">✓ Confirmation Gate 2</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-purple-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-extrabold">BƯỚC 4</span>
+            <h3 class="text-base font-extrabold text-white mt-2">Phân Tích AI &amp; Verify</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li>Tính KPI, Pareto 80/20, Kênh bán &amp; Xu hướng thời gian.</li>
+              <li>Gemini 2.5 Flash sinh Tóm tắt điều hành &amp; Giải đáp câu hỏi.</li>
+              <li>Hỗ trợ gửi <b>Feedback</b> để AI tái phân tích.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-purple-400/20 text-[11px] text-purple-300 font-bold">✓ Confirmation Gate 3</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-amber-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-extrabold">BƯỚC 5</span>
+            <h3 class="text-base font-extrabold text-white mt-2">Xuất Bản Đa Định Dạng</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li>Xuất <b>Dashboard Báo cáo kinh doanh (.html)</b>.</li>
+              <li>Xuất <b>Báo cáo Markdown (.md)</b> &amp; sao chép nhanh.</li>
+              <li>Xuất <b>Slide Quy trình (.html)</b> &amp; <b>Data sạch (.csv)</b>.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-amber-400/20 text-[11px] text-amber-300 font-bold">★ Hoàn tất 100%</div>
+        </div>
+      </div>
+
+      <div class="sub-card p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+        <span><i class="fa-solid fa-shield-halved text-cyan-300 mr-1.5"></i> <b>Nguyên tắc kiểm soát:</b> Người dùng không thể nhảy cóc qua bước chưa kiểm định — đảm bảo dữ liệu đầu vào cho AI luôn sạch và chính xác 100%.</span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 3: BƯỚC 1 & 2 - QUY TẮC ĐẦU VÀO & VALIDATION ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider">
+          <span>Slide 03 / 08</span> · <span>Chi Tiết Bước 1 &amp; Bước 2</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Thu Thập Bối Cảnh &amp; Quy Tắc Kiểm Tra Nguồn Dữ Liệu (Validation)</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-3.5 border-l-4 border-l-indigo-400">
+          <h3 class="text-base font-extrabold text-cyan-300 flex items-center gap-2">
+            <i class="fa-solid fa-file-import"></i> 1. Cơ Chế Đọc Đa Nguồn Dữ Liệu (Multi-Source Ingestion)
+          </h3>
+          <div class="space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Tệp CSV (Tự động nhận diện Encoding &amp; Delimiter):</b>
+              <p class="text-xs text-slate-300 mt-1">Thử tuần tự các bảng mã <code>utf-8</code>, <code>utf-8-sig</code>, <code>latin1</code>, <code>cp1258</code> cùng cơ chế tự động phát hiện dấu phân cách (<code>,</code>, <code>;</code>, <code>Tab</code>, <code>|</code>) qua <code>sep=None, engine='python'</code>.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Tệp Excel (.xlsx, .xls, .xlsm):</b>
+              <p class="text-xs text-slate-300 mt-1">Đọc qua <code>pandas.read_excel</code> kết hợp bộ giải mã <b>XML nội bộ dự phòng (<code>_parse_xlsx_builtin</code>)</b> bóc tách trực tiếp <code>xl/sharedStrings.xml</code> và <code>xl/worksheets/sheet1.xml</code> ngay cả khi thiếu thư viện ngoài.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Liên kết Google Sheet trực tuyến:</b>
+              <p class="text-xs text-slate-300 mt-1">Tự động trích xuất <code>spreadsheet_id</code> và <code>gid</code> bằng biểu thức chính quy (Regex), chuyển đổi sang luồng <code>/export?format=csv&amp;gid={gid}</code> để tải dữ liệu thời gian thực.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-3.5 border-l-4 border-l-sky-400">
+          <h3 class="text-base font-extrabold text-sky-300 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check"></i> 2. Quy Tắc Kiểm Tra Nguồn (Validation Gate 1)
+          </h3>
+          <div class="space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V1 — Kiểm tra tính tồn tại &amp; Định dạng:</b>
+              <p class="text-xs text-slate-300 mt-1">Từ chối ngay các tệp không thuộc định dạng bảng hoặc đường dẫn Google Sheet sai cấu trúc / chưa mở quyền xem công khai, đồng thời trả về hướng dẫn khắc phục chi tiết (<code>solution</code>).</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V2 — Kiểm tra Tập dữ liệu Rỗng (Empty Check):</b>
+              <p class="text-xs text-slate-300 mt-1">Nếu <code>df is None</code> hoặc <code>df.empty (0 dòng)</code>, hệ thống chặn ngay ở Bước 2 để tránh lỗi chia cho 0 ở các bước thống kê sau.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V3 — Kiểm tra Cấu trúc Cột tối thiểu:</b>
+              <p class="text-xs text-slate-300 mt-1">Yêu cầu <code>len(df.columns) &gt;= 2</code> (ít nhất 1 chiều phân loại/thời gian và 1 chiều chỉ số). Nếu chỉ có 1 cột, cảnh báo lỗi dấu phân cách CSV.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= SLIDE 4: BƯỚC 3 (PHẦN 1) - 6 QUY TẮC LÀM SẠCH DỮ LIỆU ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider">
+          <span>Slide 04 / 08</span> · <span>Trọng Tâm Bước 3 — Data Cleaning Engine</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">6 Quy Tắc Làm Sạch Dữ Liệu Tự Động (Data Cleaning Rules)</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1">Thực thi tuần tự trong <code>AgentEngine.clean_data()</code> nhằm biến dữ liệu thô lộn xộn thành bảng chuẩn phân tích.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-auto py-3">
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-cyan-400">
+          <div class="text-xs font-extrabold text-cyan-300">QUY TẮC 1 · CHUẨN HÓA TIÊU ĐỀ CỘT</div>
+          <h4 class="text-sm font-bold text-white mt-1">Header Normalization</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            Quét toàn bộ tên cột, cắt bỏ khoảng trắng thừa ở 2 đầu (<code>strip()</code>) và thay thế các ký tự xuống dòng (<code>\n</code>, <code>\r</code>) bằng khoảng trắng đơn để tránh lỗi truy xuất trường dữ liệu.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-emerald-400">
+          <div class="text-xs font-extrabold text-emerald-300">QUY TẮC 2 · KHỬ DÒNG TRÙNG LẶP</div>
+          <h4 class="text-sm font-bold text-white mt-1">Exact Deduplication</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            Đếm số bản ghi trùng hoàn toàn bằng <code>raw_df.duplicated().sum()</code> và loại bỏ triệt để qua <code>drop_duplicates()</code>, ngăn chặn tình trạng nhân đôi doanh thu hoặc số đơn hàng.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-indigo-400">
+          <div class="text-xs font-extrabold text-indigo-300">QUY TẮC 3 · CHUẨN HÓA THỜI GIAN</div>
+          <h4 class="text-sm font-bold text-white mt-1">Smart Datetime Parsing</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            Tự động nhận diện các cột chứa từ khóa <code>ngay</code>, <code>date</code>, <code>thoi_gian</code>, <code>time</code>, <code>created</code>, <code>updated</code> và ép kiểu về chuẩn <code>datetime64</code> (<code>errors='coerce'</code>) phục vụ phân tích xu hướng.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-amber-400">
+          <div class="text-xs font-extrabold text-amber-300">QUY TẮC 4 · LÀM SẠCH TIỀN TỆ &amp; SỐ HỌC</div>
+          <h4 class="text-sm font-bold text-white mt-1">Currency &amp; Numeric Sanitization</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            Với các cột dạng chuỗi (<code>object</code>), dùng Regex lọc bỏ ký hiệu tiền tệ và dấu phân cách (<code>[,.\sđVND$₫]</code>). Nếu <b>&gt; 80%</b> giá trị hợp lệ là số, tự động ép kiểu sang <code>float/int</code> bằng <code>pd.to_numeric</code>.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-purple-400">
+          <div class="text-xs font-extrabold text-purple-300">QUY TẮC 5 · XỬ LÝ GIÁ TRỊ KHUYẾT (NULL)</div>
+          <h4 class="text-sm font-bold text-white mt-1">Median &amp; Category Imputation</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            • <b>Cột Số (Numeric):</b> Điền ô trống bằng <b>Trung vị (<code>median()</code>)</b> của cột đó (chống nhiễu tốt hơn trung bình cộng).<br/>
+            • <b>Cột Phân loại (Text):</b> Điền nhãn chuẩn <code>"Chưa xác định"</code>.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-rose-400">
+          <div class="text-xs font-extrabold text-rose-300">QUY TẮC 6 · PHÁT HIỆN NGOẠI LAI (IQR)</div>
+          <h4 class="text-sm font-bold text-white mt-1">IQR Outlier Detection</h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+            Tính tứ phân vị <code>Q1 (25%)</code>, <code>Q3 (75%)</code> và <code>IQR = Q3 - Q1</code>. Tự động thống kê số điểm dữ liệu bất thường nằm ngoài khoảng <code>[Q1 - 1.5*IQR, Q3 + 1.5*IQR]</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="sub-card p-3 rounded-xl text-xs text-slate-300 flex items-center justify-between">
+        <span><b class="text-emerald-300">Kết quả đầu ra Bước 3:</b> Lưu bảng sạch vào <code>state["cleaned_data"]</code> và xuất báo cáo <code>cleaning_report</code> minh bạch từng chỉ số.</span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 5: BƯỚC 3 (PHẦN 2) - KIỂM ĐỊNH CHẤT LƯỢNG DỮ LIỆU ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider">
+          <span>Slide 05 / 08</span> · <span>Kiểm Định Chất Lượng (Data Quality Audit)</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">4 Tiêu Chí Kiểm Định &amp; Công Thức Chấm Điểm Chất Lượng</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 my-auto py-4">
+        <div class="lg:col-span-7 space-y-3">
+          <div class="sub-card p-4 rounded-xl flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center shrink-0">01</span>
+            <div>
+              <h4 class="text-sm font-bold text-white">Tỷ lệ giữ lại dòng dữ liệu (Retention Rate ≥ 50%)</h4>
+              <p class="text-xs text-slate-300 mt-0.5">Công thức: <code>Retention = (Số dòng sạch / Số dòng gốc) × 100%</code>. Nếu mất quá 50% số dòng sau khi làm sạch, hệ thống báo <b>FAILED</b> và chặn phân tích.</p>
+            </div>
+          </div>
+
+          <div class="sub-card p-4 rounded-xl flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-300 font-extrabold flex items-center justify-center shrink-0">02</span>
+            <div>
+              <h4 class="text-sm font-bold text-white">Quy mô mẫu thống kê tối thiểu (Clean Rows ≥ 3)</h4>
+              <p class="text-xs text-slate-300 mt-0.5">Đảm bảo tập dữ liệu sau khi loại bỏ trùng lặp phải có tối thiểu <b>3 bản ghi hợp lệ</b> mới đủ cơ sở tính xu hướng và phân bổ Pareto.</p>
+            </div>
+          </div>
+
+          <div class="sub-card p-4 rounded-xl flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 font-extrabold flex items-center justify-center shrink-0">03</span>
+            <div>
+              <h4 class="text-sm font-bold text-white">Hiện diện chỉ số định lượng (Quantitative Columns ≥ 1)</h4>
+              <p class="text-xs text-slate-300 mt-0.5">Kiểm tra <code>df.select_dtypes(include=[np.number])</code> phải có ít nhất 1 cột số học (Doanh thu, Số lượng, Đơn giá, Lợi nhuận...).</p>
+            </div>
+          </div>
+
+          <div class="sub-card p-4 rounded-xl flex items-start gap-3.5">
+            <span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 font-extrabold flex items-center justify-center shrink-0">04</span>
+            <div>
+              <h4 class="text-sm font-bold text-white">Độ hoàn chỉnh ô dữ liệu (Completeness ≥ 95%)</h4>
+              <p class="text-xs text-slate-300 mt-0.5">Công thức: <code>Completeness = ((Tổng số ô - Số ô trống) / Tổng số ô) × 100%</code>. Đạt chuẩn <b>PASSED</b> khi ≥ 95%.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 sub-card p-6 rounded-2xl border-2 border-emerald-400/35 flex flex-col justify-between">
+          <div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">CÔNG THỨC CHẤM ĐIỂM</span>
+            <h3 class="text-lg font-extrabold text-white mt-3">Data Quality Score (Thang 100%)</h3>
+            <div class="my-4 p-4 rounded-xl bg-slate-950/80 border border-indigo-400/25 font-mono text-xs sm:text-sm text-cyan-300 leading-relaxed">
+              Score = min(100.0,<br/>
+              &nbsp;&nbsp;(Completeness × 0.50)<br/>
+              &nbsp;&nbsp;+ (Retention_Rate × 0.40)<br/>
+              &nbsp;&nbsp;+ 10.0<br/>
+              )
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Điểm chất lượng kết hợp trọng số <b>50% Độ hoàn chỉnh</b> và <b>40% Tỷ lệ giữ lại bản ghi</b>, giúp người dùng đánh giá ngay độ tin cậy trước khi bấm <b>Confirmation Gate 2</b>.
+            </p>
+          </div>
+          <div class="pt-4 border-t border-indigo-400/20 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Điểm chất lượng phiên hiện tại:</span>
+            <span class="text-xl font-extrabold text-emerald-300">98.7%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-check-double text-emerald-400 mr-1"></i> Chỉ khi cả 4 tiêu chí đạt yêu cầu (<code>passed = True</code>), cổng <b>Confirmation Gate 2</b> mới cho phép kích hoạt phân tích AI ở Bước 4.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 6: BƯỚC 4 - PHÂN TÍCH AI, VERIFY & FEEDBACK LOOP ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-purple-300 uppercase tracking-wider">
+          <span>Slide 06 / 08</span> · <span>Chi Tiết Bước 4 — Process, Gemini AI &amp; Verification</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Phân Tích Nghiệp Vụ, Kiểm Định Số Học &amp; Vòng Lặp Phản Hồi</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-cyan-400">
+          <div class="text-xs font-extrabold text-cyan-300 uppercase">1. Tính Toán Định Lượng &amp; Pareto</div>
+          <h3 class="text-base font-bold text-white">Auto-Mapping &amp; KPI Engine</h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li>Tự động ánh xạ cột <b>Doanh thu</b>, <b>Lợi nhuận</b> (nếu khuyết ước tính 28% doanh thu), <b>Số lượng</b>, <b>Danh mục</b>, <b>Kênh bán</b>, <b>Chi nhánh</b>.</li>
+            <li>Tính toán chuẩn xác: Tổng doanh thu, Lợi nhuận gộp, Biên lợi nhuận (%), Tổng đơn và <b>AOV (Giá trị TB đơn)</b>.</li>
+            <li>Phân tích <b>Pareto 80/20</b>: Tính tỷ trọng <code>pct</code> và tỷ trọng tích lũy <code>cum_pct</code> để tìm nhóm hàng chủ lực.</li>
+          </ul>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-purple-400">
+          <div class="text-xs font-extrabold text-purple-300 uppercase">2. Trí Tuệ Nhân Tạo &amp; Feedback</div>
+          <h3 class="text-base font-bold text-white">Gemini 2.5 Flash CDO + Feedback Loop</h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li>Đóng vai trò <b>Giám đốc Dữ liệu (Chief Data Officer)</b> phân tích số liệu gắn chặt với bối cảnh doanh nghiệp.</li>
+            <li>Trả về cấu trúc JSON chuẩn: <code>executive_summary</code>, <code>answers_to_questions</code>, <code>insights</code> và <code>recommendations</code> (Ngắn/Trung/Dài hạn).</li>
+            <li><b>Feedback Loop:</b> Cho phép người dùng nhập yêu cầu điều chỉnh ngay tại Bước 4 để AI tái phân tích tức thì.</li>
+          </ul>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-emerald-400">
+          <div class="text-xs font-extrabold text-emerald-300 uppercase">3. Quy Tắc Kiểm Định Kết Quả</div>
+          <h3 class="text-base font-bold text-white">4-Point Verification Audit</h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li><b>Đối chiếu số học (Arithmetical Audit):</b> Kiểm tra <code>|sum(df[rev_col]) - reported_revenue| &lt; 1.0</code> (chống ảo giác số liệu AI).</li>
+            <li><b>Tính logic biên lợi nhuận:</b> Kiểm tra <code>0% ≤ Profit Margin ≤ 100%</code>.</li>
+            <li><b>Toàn vẹn trực quan (Visual Integrity):</b> Đảm bảo đủ dữ liệu biểu đồ Xu hướng, Pareto và Kênh bán.</li>
+            <li><b>Độ bao phủ bối cảnh (Context Alignment):</b> Khớp mục tiêu &amp; câu hỏi đầu vào.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-wand-magic-sparkles text-purple-300 mr-1"></i> Cơ chế Hybrid: Nếu ngoại tuyến hoặc chưa cấu hình API Key, <b>Local Analytical Intelligence</b> tự động đảm nhận phân tích chuyên sâu không gián đoạn.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 7: BƯỚC 5 & AI COPILOT ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider">
+          <span>Slide 07 / 08</span> · <span>Bước 5 &amp; Hệ Sinh Thái Tương Tác</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Xuất Bản Báo Cáo Đa Định Dạng &amp; Trợ Lý AI Data Copilot</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-3 border-l-4 border-l-amber-400">
+          <h3 class="text-base font-extrabold text-amber-300"><i class="fa-solid fa-file-export mr-1.5"></i> 4 Định Dạng Xuất Bản Đồng Bộ Tại Bước 5</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-cyan-300">1. Dashboard Kinh Doanh (.html)</div>
+              <p class="text-slate-300 mt-1">Báo cáo độc lập có biểu đồ Chart.js tương tác, thanh tiến độ kênh bán &amp; nút In PDF.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-indigo-300">2. Báo Cáo Markdown (.md)</div>
+              <p class="text-slate-300 mt-1">Định dạng bảng chuẩn Markdown dễ dàng dán vào Notion, GitHub, tài liệu nội bộ.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-purple-300">3. Slide Thuyết Trình (.html)</div>
+              <p class="text-slate-300 mt-1">Bộ slide trình chiếu trực tiếp quy trình làm việc, quy tắc làm sạch &amp; kết quả thực tế.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-emerald-300">4. Tệp Dữ Liệu Sạch (.csv)</div>
+              <p class="text-slate-300 mt-1">Xuất bảng dữ liệu đã qua 6 bước làm sạch chuẩn mã <code>utf-8-sig</code> mở trực tiếp bằng Excel.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-3 border-l-4 border-l-cyan-400">
+          <h3 class="text-base font-extrabold text-cyan-300"><i class="fa-solid fa-robot mr-1.5"></i> Trợ Lý AI Data Copilot (Live Context Sync)</h3>
+          <ul class="space-y-2 text-xs sm:text-sm text-slate-200 list-disc ml-4 leading-relaxed">
+            <li><b>Đồng bộ thời gian thực (Live Sync):</b> Tự động nhận biết người dùng đang ở bước nào (Bước 1 $
+ightarrow$ Bước 5) và truy xuất trực tiếp số liệu từ bộ dữ liệu đang nạp.</li>
+            <li><b>Trả lời trực diện bằng con số thực tế:</b> Giải đáp ngay các câu hỏi về <i>"phân tích"</i>, <i>"doanh thu"</i>, <i>"lợi nhuận"</i>, <i>"tối ưu chi phí"</i>, <i>"Pareto 80/20"</i>, <i>"kênh bán Shopee/Tiktok"</i>.</li>
+            <li><b>Linh hoạt không gian làm việc:</b> Hỗ trợ mở rộng chiều ngang, thu gọn sang cạnh phải hoặc thu nhỏ xuống thanh Dock nổi góc dưới màn hình.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-check-circle text-emerald-400 mr-1"></i> Tất cả các tệp xuất ra đều được lưu trữ tại thư mục <code>reports/</code> và sẵn sàng tải về hoặc mở toàn màn hình.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 8: TỔNG KẾT SỐ LIỆU THỰC TẾ HIỆN TẠI ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider">
+          <span>Slide 08 / 08</span> · <span>Báo Cáo Thực Thực Tế Từ Hệ Thống (Live Snapshot)</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Kết Quả Thực Thi Quy Trình Trên Dữ Liệu Hiện Tại</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1">Đơn vị: <b class="text-cyan-300">Công ty Cổ phần Bán Lẻ & Thời Trang Tân Tiến</b> · Ngành: <b class="text-slate-200">Bán lẻ đa kênh (Omnichannel)</b></p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-auto py-4">
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-emerald-400">
+          <div class="text-xs text-slate-400 font-semibold">Kết Quả Làm Sạch (Bước 3)</div>
+          <div class="text-2xl font-extrabold text-emerald-300 mt-1.5">30 / 30 dòng</div>
+          <div class="text-[11px] text-slate-400 mt-1">Đã xóa 0 dòng trùng · Xử lý 0 ô khuyết</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-cyan-400">
+          <div class="text-xs text-slate-400 font-semibold">Tổng Doanh Thu (Bước 4)</div>
+          <div class="text-2xl font-extrabold text-cyan-300 mt-1.5">28,960,000 đ</div>
+          <div class="text-[11px] text-slate-400 mt-1">AOV bình quân: <b class="text-slate-200">965,333 đ/đơn</b></div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-indigo-400">
+          <div class="text-xs text-slate-400 font-semibold">Lợi Nhuận Gộp &amp; Biên Lãi</div>
+          <div class="text-2xl font-extrabold text-indigo-300 mt-1.5">11,580,000 đ</div>
+          <div class="text-[11px] text-slate-400 mt-1">Biên lợi nhuận gộp: <b class="text-emerald-300">40.0%</b></div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-amber-400">
+          <div class="text-xs text-slate-400 font-semibold">Trụ Cột Pareto &amp; Kênh Bán</div>
+          <div class="text-lg font-extrabold text-amber-300 mt-1.5 truncate">Gia dụng (42.5%)</div>
+          <div class="text-[11px] text-slate-400 mt-1">Kênh dẫn đầu: <b class="text-cyan-300">Shopee (38.0%)</b></div>
+        </div>
+      </div>
+
+      <div class="sub-card p-5 rounded-2xl border-l-4 border-l-cyan-400 space-y-2">
+        <div class="text-xs font-extrabold text-cyan-300 uppercase">Tổng Kết Giá Trị Hệ Thống</div>
+        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+          Quy trình 5 bước của <b>Data Analyst — Nhà phân tích dữ liệu</b> giúp chuẩn hóa hoàn toàn luồng công việc từ dữ liệu thô đa nguồn $
+ightarrow$ kiểm định &amp; làm sạch tự động theo 6 quy tắc chuẩn $
+ightarrow$ phân tích chuyên sâu cùng Gemini AI $
+ightarrow$ xuất bản báo cáo &amp; slide thuyết trình chỉ trong vài giây.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Controls -->
+  <footer class="no-print relative z-20 flex items-center justify-between px-5 py-2.5 rounded-full slide-card">
+    <button onclick="prevSlide()" id="prevBtn" class="px-4 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/80 transition cursor-pointer flex items-center gap-2">
+      <i class="fa-solid fa-arrow-left"></i> <span>Slide Trước</span>
+    </button>
+
+    <div class="text-xs text-slate-400 hidden sm:block">
+      Mẹo: Nhấn phím <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">←</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">→</kbd> hoặc <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">Space</kbd> để trình chiếu
+    </div>
+
+    <button onclick="nextSlide()" id="nextBtn" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition cursor-pointer flex items-center gap-2">
+      <span>Slide Tiếp Theo</span> <i class="fa-solid fa-arrow-right"></i>
+    </button>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide-item');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+
+    function renderDots() {
+      const dotsContainer = document.getElementById('slideDots');
+      if (!dotsContainer) return;
+      dotsContainer.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = i === currentSlide
+          ? 'w-6 h-2 rounded-full bg-cyan-400 transition-all cursor-pointer'
+          : 'w-2 h-2 rounded-full bg-slate-600 hover:bg-slate-400 transition-all cursor-pointer';
+        dot.onclick = () => showSlide(i);
+        dot.title = `Đến Slide ${i + 1}`;
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+      currentSlide = index;
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) s.classList.add('active');
+        else s.classList.remove('active');
+      });
+      document.getElementById('slideCounter').textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+      renderDots();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+      else showSlide(0);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) showSlide(currentSlide - 1);
+      else showSlide(totalSlides - 1);
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    showSlide(0);
+  </script>
+</body>
+</html>

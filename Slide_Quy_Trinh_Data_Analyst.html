@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Thuyết Trình Quy Trình Phân Tích &amp; Quy Tắc Làm Sạch Dữ Liệu — Data Analyst</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    :root {
+      --slide-opacity: 0.90;
+      --slide-blur: 24px;
+      --hue-rotate: 0deg;
+      --subcard-opacity: 0.88;
+    }
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      filter: hue-rotate(var(--hue-rotate, 0deg));
+      background-color: #200c04;
+      color: #fff7ed;
+      overflow: hidden;
+      transition: filter 0.2s ease, background 0.3s ease;
+    }
+    .sweep-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .sweep-overlay::before {
+      content: "";
+      position: absolute;
+      top: -60%;
+      left: -40%;
+      width: 26%;
+      height: 240%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(251, 146, 60, 0.03) 30%,
+        rgba(254, 215, 170, 0.09) 48%,
+        rgba(255, 237, 213, 0.14) 50%,
+        rgba(254, 215, 170, 0.09) 52%,
+        rgba(251, 146, 60, 0.03) 70%,
+        transparent 100%
+      );
+      transform: rotate(20deg);
+      animation: slideSweep 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes slideSweep {
+      0% { transform: translateX(-30vw) rotate(20deg); opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translateX(175vw) rotate(20deg); opacity: 0; }
+    }
+    .slide-card {
+      background: linear-gradient(145deg, rgba(29, 38, 82, var(--slide-opacity, 0.86)) 0%, rgba(18, 24, 56, calc(var(--slide-opacity, 0.86) + 0.06)) 100%);
+      backdrop-filter: blur(var(--slide-blur, 24px)) saturate(160%);
+      -webkit-backdrop-filter: blur(var(--slide-blur, 24px)) saturate(160%);
+      border: 1px solid rgba(165, 180, 252, 0.28);
+      box-shadow: 0 24px 64px -12px rgba(7, 10, 28, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+    .sub-card {
+      background: linear-gradient(145deg, rgba(22, 30, 68, var(--subcard-opacity, 0.85)) 0%, rgba(15, 21, 48, calc(var(--subcard-opacity, 0.85) + 0.05)) 100%);
+      border: 1px solid rgba(129, 140, 248, 0.26);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .slide-item {
+      display: none;
+      animation: slideFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .slide-item.active {
+      display: flex;
+    }
+    @keyframes slideFadeIn {
+      0% { opacity: 0; transform: translateY(16px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    body.edit-mode .slide-item *[contenteditable="true"] {
+      outline: 1px dashed rgba(56, 189, 248, 0.35);
+      border-radius: 6px;
+      cursor: text;
+      transition: outline-color 0.2s ease, background-color 0.2s ease;
+    }
+    body.edit-mode .slide-item *[contenteditable="true"]:focus {
+      outline: 2px solid #38bdf8;
+      background-color: rgba(15, 23, 42, 0.55);
+    }
+    @media print {
+      body { overflow: visible !important; height: auto !important; }
+      .slide-item { display: flex !important; page-break-after: always; min-height: 92vh; margin-bottom: 24px; }
+      .no-print, .sweep-overlay { display: none !important; }
+    }
+
+    /* ============================================================== */
+    /* COLOR THEMES FOR PRESENTATION SLIDE                            */
+    /* ============================================================== */
+
+    /* 1. Terracotta Sunset & Amber (Mẫu ảnh của bạn - Cam Đất & Hoàng Hôn) */
+    body.theme-terracotta {
+      background-color: #200c04;
+      background-image:
+        radial-gradient(circle at 82% 14%, rgba(249, 115, 22, 0.72) 0%, transparent 48%),
+        radial-gradient(circle at 18% 22%, rgba(234, 88, 12, 0.58) 0%, transparent 46%),
+        radial-gradient(circle at 50% 70%, rgba(217, 119, 6, 0.45) 0%, transparent 54%),
+        radial-gradient(circle at 85% 85%, rgba(194, 65, 12, 0.40) 0%, transparent 48%),
+        repeating-linear-gradient(
+          90deg,
+          rgba(245, 158, 11, 0.14) 0px,
+          rgba(217, 119, 6, 0.14) 18px,
+          rgba(120, 53, 15, 0.30) 19px,
+          rgba(69, 26, 3, 0.38) 24px
+        ),
+        linear-gradient(135deg, #240e05 0%, #3d1708 35%, #1c0a03 70%, #120501 100%);
+      color: #fff7ed;
+    }
+    body.theme-terracotta .slide-card {
+      background: linear-gradient(145deg, rgba(58, 23, 10, var(--slide-opacity, 0.90)) 0%, rgba(36, 13, 5, calc(var(--slide-opacity, 0.90) + 0.05)) 100%);
+      border: 1px solid rgba(251, 146, 60, 0.38);
+      box-shadow: 0 24px 64px -12px rgba(25, 8, 3, 0.85), inset 0 1px 0 rgba(254, 215, 170, 0.18);
+    }
+    body.theme-terracotta .sub-card {
+      background: linear-gradient(145deg, rgba(72, 28, 14, var(--subcard-opacity, 0.88)) 0%, rgba(45, 16, 8, calc(var(--subcard-opacity, 0.88) + 0.04)) 100%);
+      border: 1px solid rgba(251, 146, 60, 0.30);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    /* 2. Neon Cyberpunk (Cyan & Hồng Neon Rực Rỡ) */
+    body.theme-neon-cyber {
+      background-color: #0d0722;
+      background-image:
+        radial-gradient(circle at 14% 18%, rgba(0, 240, 255, 0.58) 0%, transparent 46%),
+        radial-gradient(circle at 86% 20%, rgba(255, 0, 128, 0.55) 0%, transparent 48%),
+        radial-gradient(circle at 50% 65%, rgba(147, 51, 234, 0.45) 0%, transparent 54%),
+        radial-gradient(circle at 20% 85%, rgba(59, 130, 246, 0.40) 0%, transparent 50%),
+        linear-gradient(135deg, #090518 0%, #140b2e 45%, #070314 100%);
+      color: #f8fafc;
+    }
+    body.theme-neon-cyber .slide-card {
+      background: linear-gradient(145deg, rgba(22, 16, 48, var(--slide-opacity, 0.90)) 0%, rgba(12, 8, 30, calc(var(--slide-opacity, 0.90) + 0.05)) 100%);
+      border: 1px solid rgba(0, 240, 255, 0.42);
+      box-shadow: 0 24px 64px -12px rgba(4, 2, 16, 0.88), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    body.theme-neon-cyber .sub-card {
+      background: linear-gradient(145deg, rgba(30, 22, 64, var(--subcard-opacity, 0.88)) 0%, rgba(18, 12, 42, calc(var(--subcard-opacity, 0.88) + 0.04)) 100%);
+      border: 1px solid rgba(147, 51, 234, 0.38);
+    }
+
+    /* 3. Radiant Amber Gold (Hoàng Kim Rực Nắng & Vàng Champagne) */
+    body.theme-radiant-gold {
+      background-color: #1a1003;
+      background-image:
+        radial-gradient(circle at 18% 16%, rgba(251, 191, 36, 0.65) 0%, transparent 46%),
+        radial-gradient(circle at 82% 20%, rgba(245, 158, 11, 0.58) 0%, transparent 48%),
+        radial-gradient(circle at 50% 75%, rgba(217, 119, 6, 0.44) 0%, transparent 52%),
+        radial-gradient(circle at 80% 85%, rgba(180, 83, 9, 0.38) 0%, transparent 48%),
+        linear-gradient(135deg, #221404 0%, #351f06 45%, #180d02 100%);
+      color: #fefce8;
+    }
+    body.theme-radiant-gold .slide-card {
+      background: linear-gradient(145deg, rgba(48, 30, 9, var(--slide-opacity, 0.90)) 0%, rgba(28, 18, 4, calc(var(--slide-opacity, 0.90) + 0.05)) 100%);
+      border: 1px solid rgba(251, 191, 36, 0.42);
+      box-shadow: 0 24px 64px -12px rgba(18, 11, 2, 0.85), inset 0 1px 0 rgba(254, 240, 138, 0.18);
+    }
+    body.theme-radiant-gold .sub-card {
+      background: linear-gradient(145deg, rgba(62, 40, 12, var(--subcard-opacity, 0.88)) 0%, rgba(38, 24, 6, calc(var(--subcard-opacity, 0.88) + 0.04)) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    /* 4. Arctic Aurora Bright (Cực Quang Xanh Ngọc & Mint Sáng Rực) */
+    body.theme-aurora-bright {
+      background-color: #021a14;
+      background-image:
+        radial-gradient(circle at 15% 18%, rgba(16, 185, 129, 0.62) 0%, transparent 45%),
+        radial-gradient(circle at 85% 22%, rgba(6, 182, 212, 0.58) 0%, transparent 48%),
+        radial-gradient(circle at 50% 70%, rgba(52, 211, 153, 0.45) 0%, transparent 54%),
+        linear-gradient(135deg, #021c16 0%, #053328 45%, #021511 100%);
+      color: #ecfdf5;
+    }
+    body.theme-aurora-bright .slide-card {
+      background: linear-gradient(145deg, rgba(8, 46, 36, var(--slide-opacity, 0.90)) 0%, rgba(3, 26, 20, calc(var(--slide-opacity, 0.90) + 0.05)) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.42);
+      box-shadow: 0 24px 64px -12px rgba(1, 16, 12, 0.85), inset 0 1px 0 rgba(167, 243, 208, 0.18);
+    }
+    body.theme-aurora-bright .sub-card {
+      background: linear-gradient(145deg, rgba(12, 58, 46, var(--subcard-opacity, 0.88)) 0%, rgba(6, 36, 28, calc(var(--subcard-opacity, 0.88) + 0.04)) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.32);
+    }
+
+    /* 5. Coral Peach Glow (Hồng San Hô & Cam Đào Rực Rỡ) */
+    body.theme-coral-glow {
+      background-color: #220711;
+      background-image:
+        radial-gradient(circle at 18% 18%, rgba(244, 63, 94, 0.60) 0%, transparent 46%),
+        radial-gradient(circle at 82% 22%, rgba(251, 113, 133, 0.54) 0%, transparent 48%),
+        radial-gradient(circle at 50% 75%, rgba(253, 164, 175, 0.38) 0%, transparent 52%),
+        linear-gradient(135deg, #240812 0%, #3b0e1d 45%, #18040b 100%);
+      color: #fff1f2;
+    }
+    body.theme-coral-glow .slide-card {
+      background: linear-gradient(145deg, rgba(56, 16, 28, var(--slide-opacity, 0.90)) 0%, rgba(34, 8, 16, calc(var(--slide-opacity, 0.90) + 0.05)) 100%);
+      border: 1px solid rgba(251, 113, 133, 0.42);
+      box-shadow: 0 24px 64px -12px rgba(24, 4, 11, 0.85), inset 0 1px 0 rgba(254, 205, 211, 0.18);
+    }
+    body.theme-coral-glow .sub-card {
+      background: linear-gradient(145deg, rgba(72, 22, 38, var(--subcard-opacity, 0.88)) 0%, rgba(46, 12, 24, calc(var(--subcard-opacity, 0.88) + 0.04)) 100%);
+      border: 1px solid rgba(251, 113, 133, 0.32);
+    }
+
+    /* 6. Deep Sapphire / Navy (Xanh Than Đậm Cổ Điển) */
+    body.theme-sapphire {
+      background-color: #101530;
+      background-image:
+        radial-gradient(circle at 14% 18%, rgba(99, 102, 241, 0.45) 0%, transparent 46%),
+        radial-gradient(circle at 86% 20%, rgba(14, 165, 233, 0.40) 0%, transparent 48%),
+        radial-gradient(circle at 50% 52%, rgba(124, 58, 237, 0.30) 0%, transparent 56%),
+        radial-gradient(circle at 20% 84%, rgba(20, 184, 166, 0.32) 0%, transparent 48%),
+        linear-gradient(135deg, #0e132e 0%, #171d44 50%, #0d2238 100%);
+      color: #f1f5f9;
+    }
+  </style>
+</head>
+<body class="theme-terracotta flex flex-col justify-between h-screen p-3 sm:p-5 md:p-7 select-none">
+  <div class="sweep-overlay"></div>
+
+  <!-- Optical Control Panel (Popup with sliders for Hue, Opacity, Blur and Scene Presets) -->
+  <div id="slideOpticsPanel" class="hidden fixed top-20 right-6 z-50 slide-card rounded-2xl p-4 sm:p-5 w-84 max-w-[92vw] text-xs space-y-4 shadow-2xl border border-amber-500/40 backdrop-blur-2xl">
+    <div class="flex items-center justify-between border-b border-slate-700/70 pb-2.5">
+      <span class="font-bold tracking-wide uppercase text-[11px] text-amber-400 flex items-center gap-1.5">
+        <i class="fa-solid fa-sliders text-amber-400"></i>
+        <span>SPATIAL GLASS &amp; COLOR STUDIO</span>
+      </span>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold">Slide Mode</span>
+        <button onclick="toggleSlideOptics()" class="text-slate-400 hover:text-white cursor-pointer px-1.5 py-0.5 rounded hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Thanh Kéo Đổi Tông Màu (Color Hue Spectrum Slider) -->
+    <div>
+      <div class="flex justify-between mb-1.5 text-slate-200 font-semibold text-[11px]">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-palette text-amber-400"></i>
+          <span>Thanh Kéo Đổi Tông Màu (Hue Spectrum)</span>
+        </span>
+        <span id="hueVal" class="text-amber-300 font-bold font-mono">0° (Gốc)</span>
+      </div>
+      <input id="hueSlider" type="range" min="0" max="360" value="0" class="w-full h-3 rounded-lg appearance-none cursor-pointer border border-white/20 shadow-inner"
+        style="background: linear-gradient(to right, #ff0000 0%, #ff7700 15%, #ffff00 30%, #00ff00 45%, #00ffff 60%, #0000ff 75%, #ff00ff 90%, #ff0000 100%);" />
+      <div class="flex justify-between text-[9px] text-slate-400 mt-1 font-mono">
+        <span>0° Cam/Đỏ</span>
+        <span>90° Vàng</span>
+        <span>180° Xanh Lơ</span>
+        <span>270° Tím</span>
+        <span>360°</span>
+      </div>
+    </div>
+
+    <!-- 2. Thanh Kéo Độ Trong Suốt Nền (Opacity) -->
+    <div>
+      <div class="flex justify-between mb-1.5 text-slate-200 font-semibold text-[11px]">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-eye text-cyan-400"></i>
+          <span>Độ trong suốt nền (Opacity)</span>
+        </span>
+        <span id="opacityVal" class="text-amber-300 font-bold font-mono">90%</span>
+      </div>
+      <input id="opacitySlider" type="range" min="40" max="98" value="90" class="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg" />
+    </div>
+
+    <!-- 3. Thanh Kéo Độ Mờ Kính (Blur) -->
+    <div>
+      <div class="flex justify-between mb-1.5 text-slate-200 font-semibold text-[11px]">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+          <span>Độ mờ kính (Backdrop Blur)</span>
+        </span>
+        <span id="blurVal" class="text-amber-300 font-bold font-mono">24px</span>
+      </div>
+      <input id="blurSlider" type="range" min="4" max="48" value="24" class="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg" />
+    </div>
+
+    <!-- 4. Chọn Nhanh Bối Cảnh Không Gian (Scene / Presets) -->
+    <div class="pt-2 border-t border-slate-700/60">
+      <div class="flex items-center justify-between mb-2 text-slate-200 font-semibold text-[11px]">
+        <span>Bối Cảnh Không Gian (Scene)</span>
+        <span class="text-[9px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30">6 Tông Màu</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="setSlideTheme('theme-terracotta'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-amber-500/20 border border-amber-400 font-bold text-amber-300 shadow-sm flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-300 border border-white/70 shrink-0"></span>
+          <span class="truncate">Cam Đất (Mẫu ảnh)</span>
+        </button>
+        <button onclick="setSlideTheme('theme-neon-cyber'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:bg-slate-800 font-medium flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 border border-white/70 shrink-0"></span>
+          <span class="truncate">Neon Cyberpunk</span>
+        </button>
+        <button onclick="setSlideTheme('theme-radiant-gold'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:bg-slate-800 font-medium flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-yellow-400 via-amber-400 to-orange-500 border border-white/70 shrink-0"></span>
+          <span class="truncate">Hoàng Kim Rực</span>
+        </button>
+        <button onclick="setSlideTheme('theme-aurora-bright'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:bg-slate-800 font-medium flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border border-white/70 shrink-0"></span>
+          <span class="truncate">Cực Quang Xanh</span>
+        </button>
+        <button onclick="setSlideTheme('theme-coral-glow'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:bg-slate-800 font-medium flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-rose-500 via-pink-400 to-orange-300 border border-white/70 shrink-0"></span>
+          <span class="truncate">Hồng San Hô</span>
+        </button>
+        <button onclick="setSlideTheme('theme-sapphire'); resetHueSlider();" class="px-2.5 py-2 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:bg-slate-800 font-medium flex items-center gap-1.5 cursor-pointer transition text-left">
+          <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-slate-800 via-indigo-900 to-cyan-600 border border-white/70 shrink-0"></span>
+          <span class="truncate">Xanh Than Đậm</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Presentation Bar -->
+  <header class="no-print relative z-20 flex flex-wrap items-center justify-between gap-3 px-5 py-2.5 rounded-full slide-card">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
+        <i class="fa-solid fa-chart-simple"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm sm:text-base font-extrabold tracking-tight text-slate-100">Data Analyst</span>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">SLIDE THUYẾT TRÌNH WORKFLOW</span>
+        </div>
+        <p class="text-[11px] text-slate-400 hidden sm:block">Phân tích chi tiết Quy trình 5 Bước · Quy tắc Làm sạch Dữ liệu · Kiểm định Chất lượng</p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Nút Mở Bảng Kéo Màu & Kính Mờ (Optics Panel) -->
+      <button id="toggleSlideOpticsBtn" onclick="toggleSlideOptics()" class="px-3.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-400/40 transition cursor-pointer flex items-center gap-1.5 shadow-xs" title="Mở bảng thanh kéo màu &amp; hiệu ứng kính mờ (Optics)">
+        <i class="fa-solid fa-sliders text-amber-400"></i>
+        <span>Tùy Biến Kính Mờ (Optics)</span>
+      </button>
+
+      <!-- Theme Switcher Palette -->
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/80 shadow-xs" title="Đổi bảng màu giao diện Slide">
+        <span class="text-[10px] font-semibold text-slate-400 hidden xl:inline">Tông màu:</span>
+        <button onclick="setSlideTheme('theme-terracotta'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-300 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Terracotta Sunset (Cam Đất - Mẫu ảnh)"></button>
+        <button onclick="setSlideTheme('theme-neon-cyber'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Neon Cyberpunk (Rực Rỡ)"></button>
+        <button onclick="setSlideTheme('theme-radiant-gold'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-yellow-400 via-amber-400 to-orange-500 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Hoàng Kim (Rực Nắng)"></button>
+        <button onclick="setSlideTheme('theme-aurora-bright'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-emerald-400 via-teal-300 to-cyan-400 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Cực Quang Xanh (Rực Sáng)"></button>
+        <button onclick="setSlideTheme('theme-coral-glow'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-rose-500 via-pink-400 to-orange-300 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Hồng San Hô (Rực Rỡ)"></button>
+        <button onclick="setSlideTheme('theme-sapphire'); resetHueSlider();" class="w-4 h-4 rounded-full bg-gradient-to-tr from-slate-800 via-indigo-900 to-cyan-600 border border-white/80 shadow-xs hover:scale-125 transition cursor-pointer" title="Xanh Than Sapphire (Cổ Điển)"></button>
+      </div>
+
+      <!-- Live Slide Editor Controls -->
+      <button id="toggleEditBtn" onclick="toggleEditMode()" class="px-3.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-400/40 transition cursor-pointer flex items-center gap-1.5" title="Bật/Tắt chế độ bấm vào chữ để sửa trực tiếp trên Slide">
+        <i class="fa-solid fa-pen-to-square"></i> <span id="editBtnText">Bật Sửa Trực Tiếp</span>
+      </button>
+      <button id="addSlideBtn" onclick="addNewSlide()" class="px-3 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold border border-emerald-400/40 transition cursor-pointer items-center gap-1 hidden" title="Thêm 1 Slide mới sau Slide hiện tại">
+        <i class="fa-solid fa-plus"></i> <span>Thêm Slide</span>
+      </button>
+      <button id="deleteSlideBtn" onclick="deleteCurrentSlide()" class="px-3 py-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-400/40 transition cursor-pointer items-center gap-1 hidden" title="Xóa Slide hiện tại">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+      <button id="saveHtmlBtn" onclick="downloadEditedSlides()" class="px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition cursor-pointer flex items-center gap-1.5" title="Tải về file Slide HTML đã lưu mọi chỉnh sửa của bạn">
+        <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Lưu File (.html)</span>
+      </button>
+
+      <!-- Slide Dots -->
+      <div id="slideDots" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#111836]/80 border border-indigo-400/25"></div>
+      <span id="slideCounter" class="px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-xs font-extrabold text-cyan-300">Slide 1 / 8</span>
+      <button onclick="window.print()" class="px-3 py-1.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/80 transition cursor-pointer flex items-center gap-1.5" title="In toàn bộ Slide ra PDF">
+        <i class="fa-solid fa-print text-cyan-300"></i> <span class="hidden xl:inline">In / PDF</span>
+      </button>
+      <button onclick="toggleFullScreen()" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition cursor-pointer flex items-center gap-1.5">
+        <i class="fa-solid fa-expand"></i> <span class="hidden xl:inline">Toàn màn hình</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Slide Stage -->
+  <main class="relative z-10 flex-1 my-3 sm:my-4 flex items-stretch overflow-hidden">
+
+    <!-- ================= SLIDE 1: TRANG BÌA ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 md:p-14 flex-col justify-between overflow-y-auto active">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/35 text-xs font-bold text-cyan-300 tracking-wide uppercase" spellcheck="false">
+          <i class="fa-solid fa-layer-group mr-1.5"></i> Tài Liệu Kiến Trúc &amp; Quy Trình Nghiệp Vụ
+        </span>
+        <span class="text-xs text-slate-400 font-mono" spellcheck="false">Gemini 2.5 Flash · Multi-Stage Agent</span>
+      </div>
+
+      <div class="my-auto py-6 max-w-4xl">
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight text-white" spellcheck="false">
+          Quy Trình Hoạt Động <br>
+          <span class="bg-gradient-to-r from-cyan-300 via-indigo-300 to-purple-300 bg-clip-text text-transparent" spellcheck="false">
+            Data Analyst — Nhà Phân Tích Dữ Liệu
+          </span>
+        </h1>
+        <p class="mt-5 text-sm sm:text-lg text-slate-300 leading-relaxed max-w-3xl" spellcheck="false">
+          Hệ thống phân tích dữ liệu đa nguồn tự động hóa theo <b>5 bước tuần tự </b>&nbsp;kết hợp <b>3 cổng xác nhận người dùng</b>, bộ quy tắc <b>Làm sạch &amp; Kiểm định chất lượng dữ liệu nghiêm ngặt</b> và mô hình trí tuệ nhân tạo <b>Google Gemini</b>.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-cyan-400">
+            <div class="text-xs font-bold text-cyan-300 uppercase" spellcheck="false">Quy Trình Chuẩn Hóa</div>
+            <div class="text-xl font-extrabold text-white mt-1" spellcheck="false">5 Bước &amp; 3 Gate</div>
+            <p class="text-xs text-slate-400 mt-1" spellcheck="false">Kiểm soát chặt chẽ từ dữ liệu thô đầu vào đến khi xuất báo cáo cuối cùng.</p>
+          </div>
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-emerald-400">
+            <div class="text-xs font-bold text-emerald-300 uppercase" spellcheck="false">Làm Sạch Tự Động</div>
+            <div class="text-xl font-extrabold text-white mt-1" spellcheck="false">6 Quy Tắc Cốt Lõi</div>
+            <p class="text-xs text-slate-400 mt-1" spellcheck="false">Khử trùng lặp, chuẩn hóa tiền tệ/thời gian, điền khuyết&nbsp; &amp; lọc .</p>
+          </div>
+          <div class="sub-card p-4 rounded-2xl border-l-4 border-l-purple-400">
+            <div class="text-xs font-bold text-purple-300 uppercase" spellcheck="false">Đa Định Dạng Xuất</div>
+            <div class="text-xl font-extrabold text-white mt-1" spellcheck="false">HTML · MD · Slide · CSV</div>
+            <p class="text-xs text-slate-400 mt-1" spellcheck="false">Đồng bộ 100% số liệu thực tế kèm Trợ lý AI Copilot trực tuyến xuyên suốt.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-indigo-400/20 text-xs text-slate-400">
+        <span spellcheck="false"><br></span>
+        <span spellcheck="false">Sử dụng phím mũi tên <b>← / →</b> hoặc nút bên dưới để chuyển Slide</span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 2: TỔNG QUAN LUỒNG WORKFLOW 5 BƯỚC ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 02 / 08</span> · <span spellcheck="false">Kiến Trúc Tổng Thể</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">Sơ Đồ Quy Trình Làm Việc 5 Bước&nbsp;</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1" spellcheck="false">Mỗi bước đều có cơ chế khóa an toàn (Step Lock) và cổng xác nhận của người dùng trước khi chuyển tiếp.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3.5 my-auto py-4">
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-indigo-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[11px] font-extrabold" spellcheck="false">BƯỚC 1</span>
+            <h3 class="text-base font-extrabold text-white mt-2" spellcheck="false">Dữ Liệu &amp; Bối Cảnh</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li spellcheck="false">Nhập Tên DN, Ngành nghề, Mục tiêu &amp; Câu hỏi kinh doanh.</li>
+              <li spellcheck="false">Tải file Excel/CSV, dán link Google Sheet hoặc nạp Dữ liệu mẫu.</li>
+              <li spellcheck="false"><br></li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-indigo-400/20 text-[11px] text-indigo-300 font-bold" spellcheck="false">→ Chuyển kiểm định nguồn</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-sky-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[11px] font-extrabold" spellcheck="false">BƯỚC 2</span>
+            <h3 class="text-base font-extrabold text-white mt-2" spellcheck="false">Kiểm Tra Nguồn&nbsp;</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li spellcheck="false">Kiểm tra cấu trúc bảng, số dòng, số cột và định dạng tệp.</li>
+              <li spellcheck="false">Nhận diện danh sách trường thông tin.</li>
+              <li spellcheck="false">Hiển thị 5 dòng dữ liệu thô đầu tiên để đối chiếu.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-sky-400/20 text-[11px] text-sky-300 font-bold" spellcheck="false">✓ Confirmation Gate 1</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-emerald-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold" spellcheck="false">BƯỚC 3</span>
+            <h3 class="text-base font-extrabold text-white mt-2" spellcheck="false">Làm Sạch &amp; Kiểm Định</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li spellcheck="false">Thực thi 6 quy tắc làm sạch tự động (Data Cleaning).</li>
+              <li spellcheck="false">Chấm điểm chất lượng dữ liệu.</li>
+              <li spellcheck="false">Báo cáo dòng trùng, ô khuyết &amp; ngoại lai (IQR).</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-emerald-400/20 text-[11px] text-emerald-300 font-bold" spellcheck="false">✓ Confirmation Gate 2</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-purple-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-extrabold" spellcheck="false">BƯỚC 4</span>
+            <h3 class="text-base font-extrabold text-white mt-2" spellcheck="false">Phân Tích &amp; Verify</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li spellcheck="false">Tính KPI, Pareto 80/20, Kênh bán &amp; Xu hướng thời gian.</li>
+              <li spellcheck="false">Gemini tóm tắt điều hành &amp; Giải đáp câu hỏi.</li>
+              <li spellcheck="false">Hỗ trợ gửi <b>Feedback</b> để AI tái phân tích.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-purple-400/20 text-[11px] text-purple-300 font-bold" spellcheck="false">✓ Confirmation Gate 3</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-4 border-t-amber-400 flex flex-col justify-between">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-extrabold" spellcheck="false">BƯỚC 5</span>
+            <h3 class="text-base font-extrabold text-white mt-2" spellcheck="false">Xuất Bản Đa Định Dạng</h3>
+            <ul class="mt-2.5 space-y-1.5 text-xs text-slate-300 list-disc ml-4">
+              <li spellcheck="false">Xuất <b>Dashboard Báo cáo kinh doanh (.html)</b>.</li>
+              <li spellcheck="false">Xuất <b>Báo cáo Markdown (.md)</b> &amp; sao chép nhanh.</li>
+              <li spellcheck="false">Xuất <b>Slide Quy trình (.html)</b> &amp; <b>Data sạch (.csv)</b>.</li>
+            </ul>
+          </div>
+          <div class="mt-3 pt-2 border-t border-amber-400/20 text-[11px] text-amber-300 font-bold" spellcheck="false">★ Hoàn tất 100%</div>
+        </div>
+      </div>
+
+      <div class="sub-card p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
+        <span><i class="fa-solid fa-shield-halved text-cyan-300 mr-1.5"></i> <b>Nguyên tắc kiểm soát:</b> Người dùng không thể nhảy cóc qua bước chưa kiểm định — đảm bảo dữ liệu đầu vào cho AI luôn sạch và chính xác 100%.</span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 3: BƯỚC 1 & 2 - QUY TẮC ĐẦU VÀO & VALIDATION ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 03 / 08</span> · <span spellcheck="false">Chi Tiết Bước 1 &amp; Bước 2</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">Thu Thập Bối Cảnh &amp; Quy Tắc Kiểm Tra Nguồn Dữ Liệu (Validation)</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-3.5 border-l-4 border-l-indigo-400">
+          <h3 class="text-base font-extrabold text-cyan-300 flex items-center gap-2" spellcheck="false">
+            <i class="fa-solid fa-file-import"></i> 1. Cơ Chế Đọc Đa Nguồn Dữ Liệu (Multi-Source Ingestion)
+          </h3>
+          <div class="space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Tệp CSV (Tự động nhận diện Encoding &amp; Delimiter):</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false"><br></p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Tệp Excel (.xlsx, .xls, .xlsm):</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false"><br></p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-400/20">
+              <b class="text-indigo-300">• Liên kết Google Sheet trực tuyến:</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false"><br></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-3.5 border-l-4 border-l-sky-400">
+          <h3 class="text-base font-extrabold text-sky-300 flex items-center gap-2" spellcheck="false">
+            <i class="fa-solid fa-clipboard-check"></i> 2. Quy Tắc Kiểm Tra Nguồn (Validation Gate 1)
+          </h3>
+          <div class="space-y-2.5 text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V1 — Kiểm tra tính tồn tại &amp; Định dạng:</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false">Từ chối ngay các tệp không thuộc định dạng bảng hoặc đường dẫn Google Sheet sai cấu trúc / chưa mở quyền xem công khai, đồng thời trả về hướng dẫn khắc phục chi tiết.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V2 — Kiểm tra Tập dữ liệu Rỗng (Empty Check):</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false">Nếu file/link lỗi (file/link trắng tinh, chỉ có đúng dòng tiêu đề cột...)<font face="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace">&nbsp;,</font>&nbsp;hệ thống chặn ngay ở Bước 2 để tránh lỗi chia cho 0 (0 dòng...)<span style="font-size: 0.75rem;" spellcheck="false">&nbsp;ở các bước thống kê sau.</span></p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/60 border border-sky-400/20">
+              <b class="text-sky-300">Quy tắc V3 — Kiểm tra Cấu trúc Cột tối thiểu:</b>
+              <p class="text-xs text-slate-300 mt-1" spellcheck="false">Yêu cầu&nbsp; bảng dữ liệu có<code>&gt;= 2 cột&nbsp;</code>&nbsp;(ít nhất 1 chiều phân loại/thời gian và 1 chiều chỉ số). Nếu chỉ có 1 cột, cảnh báo lỗi.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ================= SLIDE 4: BƯỚC 3 (PHẦN 1) - 6 QUY TẮC LÀM SẠCH DỮ LIỆU ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 04 / 08</span> · <span spellcheck="false">Trọng Tâm Bước 3 — Data Cleaning&nbsp;</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">6 Quy Tắc Làm Sạch Dữ Liệu Tự Động (Data Cleaning)</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1" spellcheck="false"><br></p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-auto py-3">
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-cyan-400">
+          <div class="text-xs font-extrabold text-cyan-300" spellcheck="false">QUY TẮC 1 · CHUẨN HÓA TIÊU ĐỀ CỘT</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            Quét toàn bộ tên cột, cắt bỏ khoảng trắng thừa ở 2 đầu &nbsp;và thay thế các ký tự xuống dòng bằng khoảng trắng đơn để tránh lỗi truy xuất trường dữ liệu.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-emerald-400">
+          <div class="text-xs font-extrabold text-emerald-300" spellcheck="false">QUY TẮC 2 · KHỬ DÒNG TRÙNG LẶP</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            Đếm số bản ghi trùng và loại bỏ triệt để , ngăn chặn tình trạng nhân đôi doanh thu hoặc số đơn hàng.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-indigo-400">
+          <div class="text-xs font-extrabold text-indigo-300" spellcheck="false">QUY TẮC 3 · CHUẨN HÓA THỜI GIAN</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            Tự động nhận diện các cột chứa từ khóa <code>ngay</code>, <code>date</code>, <code>thoi_gian</code>, <code>time</code>, <code>created</code>, <code>updated</code> và ép kiểu về chuẩn <font face="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace">,</font>&nbsp;phục vụ phân tích xu hướng.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-amber-400">
+          <div class="text-xs font-extrabold text-amber-300" spellcheck="false">QUY TẮC 4 · LÀM SẠCH TIỀN TỆ &amp; CHUẨN SỐ</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            Với các cột dạng chuỗi,lọc bỏ ký hiệu tiền tệ và dấu phân cách . Nếu <b>&gt; 80%</b> giá trị hợp lệ là số, tự động ép kiểu sang số nguyên hoặc số thực</p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-purple-400">
+          <div class="text-xs font-extrabold text-purple-300" spellcheck="false">QUY TẮC 5 · XỬ LÝ GIÁ TRỊ KHUYẾT (NULL)</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            • <b>Cột Số :</b> Điền ô trống bằng <b>Trung vị </b>&nbsp;của cột đó (chống nhiễu tốt hơn trung bình cộng).<br>
+            • <b>Cột Phân loại (Text):</b> Điền nhãn chuẩn <code>"Chưa xác định"</code>.
+          </p>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-rose-400">
+          <div class="text-xs font-extrabold text-rose-300" spellcheck="false">QUY TẮC 6 · PHÁT HIỆN NGOẠI LAI&nbsp;</div>
+          <h4 class="text-sm font-bold text-white mt-1" spellcheck="false"><br></h4>
+          <p class="text-xs text-slate-300 mt-1.5 leading-relaxed" spellcheck="false">
+            Tính tứ phân vị <code>Q1 (25%)</code>, <code>Q3 (75%)</code> và <code>IQR = Q3 - Q1</code>. Tự động thống kê số điểm dữ liệu bất thường nằm ngoài khoảng <code>[Q1 - 1.5*IQR, Q3 + 1.5*IQR]</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="sub-card p-3 rounded-xl text-xs text-slate-300 flex items-center justify-between">
+        <span spellcheck="false"><br></span>
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 5: BƯỚC 3 (PHẦN 2) - KIỂM ĐỊNH CHẤT LƯỢNG DỮ LIỆU ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 05 / 08</span> · <span spellcheck="false">Kiểm Định Chất Lượng (Data Quality Audit)</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">4 Tiêu Chí Kiểm Định Chất Lượng Dữ Liệu</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-auto py-4">
+        <div class="sub-card p-5 rounded-xl flex items-start gap-3.5">
+          <span class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-extrabold flex items-center justify-center shrink-0" spellcheck="false">01</span>
+          <div>
+            <h4 class="text-sm font-bold text-white" spellcheck="false">Tỷ lệ giữ lại dòng dữ liệu&nbsp;</h4>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed" spellcheck="false">Công thức: <code>Retention = (Số dòng sạch / Số dòng gốc) × 100%</code>. Nếu mất quá 50% số dòng sau khi làm sạch, hệ thống báo <b>FAILED</b> và chặn phân tích.</p>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-xl flex items-start gap-3.5">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-300 font-extrabold flex items-center justify-center shrink-0" spellcheck="false">02</span>
+          <div>
+            <h4 class="text-sm font-bold text-white" spellcheck="false">Quy mô mẫu thống kê tối thiểu&nbsp;</h4>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed" spellcheck="false">Đảm bảo tập dữ liệu sau khi loại bỏ trùng lặp phải có tối thiểu <b>3 bản ghi hợp lệ</b> mới đủ cơ sở tính xu hướng và phân bổ Pareto.</p>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-xl flex items-start gap-3.5">
+          <span class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 font-extrabold flex items-center justify-center shrink-0" spellcheck="false">03</span>
+          <div>
+            <h4 class="text-sm font-bold text-white" spellcheck="false">Hiện diện chỉ số định lượng&nbsp;</h4>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed" spellcheck="false">Kiểm tra &nbsp;phải có ít nhất 1 cột số học (Doanh thu, Số lượng, Đơn giá, Lợi nhuận...).</p>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-xl flex items-start gap-3.5">
+          <span class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-300 font-extrabold flex items-center justify-center shrink-0" spellcheck="false">04</span>
+          <div>
+            <h4 class="text-sm font-bold text-white" spellcheck="false">Độ hoàn chỉnh ô dữ liệu&nbsp;</h4>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed" spellcheck="false">Công thức: <code>Completeness = ((Tổng số ô - Số ô trống) / Tổng số ô) × 100%</code>. Đạt chuẩn <b>PASSED</b> khi ≥ 95%.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-check-double text-emerald-400 mr-1"></i> Chỉ khi cả 4 tiêu chí đạt yêu cầu (<code>passed = True</code>), cổng <b>Confirmation Gate 2</b> mới cho phép kích hoạt phân tích AI ở Bước 4.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 6: BƯỚC 4 - PHÂN TÍCH AI, VERIFY & FEEDBACK LOOP ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-purple-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 06 / 08</span> · <span spellcheck="false">Chi Tiết Bước 4 — Process, Gemini AI &amp; Verification</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">Phân Tích Nghiệp Vụ, Kiểm Định Số Học &amp; Vòng Lặp Phản Hồi</h2>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-cyan-400">
+          <div class="text-xs font-extrabold text-cyan-300 uppercase" spellcheck="false">1. Tính Toán Định Lượng &amp; Pareto</div>
+          <h3 class="text-base font-bold text-white" spellcheck="false"><br></h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li spellcheck="false">Tự động ánh xạ cột <b>Doanh thu</b>, <b>Lợi nhuận</b>&nbsp;, <b>Số lượng</b>, <b>Danh mục</b>, <b>Kênh bán</b>, <b>Chi nhánh</b>.</li>
+            <li spellcheck="false">Tính toán chuẩn xác: Tổng doanh thu, Lợi nhuận gộp, Biên lợi nhuận (%), Tổng đơn và <b>AOV (Giá trị TB đơn)</b>.</li>
+            <li spellcheck="false">Phân tích <b>Pareto 80/20</b></li>
+          </ul>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-purple-400">
+          <div class="text-xs font-extrabold text-purple-300 uppercase" spellcheck="false">2. Trí Tuệ Nhân Tạo &amp; Feedback</div>
+          <h3 class="text-base font-bold text-white" spellcheck="false"><br></h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li spellcheck="false">Đóng vai trò <b>Giám đốc Dữ liệu </b>&nbsp;phân tích số liệu gắn chặt với bối cảnh doanh nghiệp.</li>
+            <li spellcheck="false">Trả về cấu trúc&nbsp; chuẩn</li>
+            <li spellcheck="false"><b>Feedback Loop:</b> Cho phép người dùng nhập yêu cầu điều chỉnh ngay tại Bước 4 để AI tái phân tích tức thì.</li>
+          </ul>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-2.5 border-t-4 border-t-emerald-400">
+          <div class="text-xs font-extrabold text-emerald-300 uppercase" spellcheck="false">3. Quy Tắc Kiểm Định Kết Quả</div>
+          <h3 class="text-base font-bold text-white" spellcheck="false"><br></h3>
+          <ul class="space-y-1.5 text-xs text-slate-300 list-disc ml-4 leading-relaxed">
+            <li spellcheck="false"><b>Đối chiếu số học</b></li>
+            <li spellcheck="false"><b>Tính logic biên lợi nhuận</b></li>
+            <li spellcheck="false"><b>Toàn vẹn trực quan:</b> Đảm bảo đủ dữ liệu biểu đồ Xu hướng, Pareto và Kênh bán.</li>
+            <li spellcheck="false"><b>Độ bao phủ bối cảnh :</b> Khớp mục tiêu &amp; câu hỏi đầu vào.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-wand-magic-sparkles text-purple-300 mr-1"></i> Cơ chế Hybrid: Nếu ngoại tuyến hoặc chưa cấu hình API Key, <b>Local Analytical Intelligence</b> tự động đảm nhận phân tích chuyên sâu không gián đoạn.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 7: BƯỚC 5 & AI COPILOT ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 07 / 08</span> · <span spellcheck="false">Bước 5 &amp; Hệ Sinh Thái Tương Tác</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">Xuất Bản Báo Cáo Đa Định Dạng &amp; Trợ Lý AI Data Copilot</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 my-auto py-4">
+        <div class="sub-card p-5 rounded-2xl space-y-3 border-l-4 border-l-amber-400">
+          <h3 class="text-base font-extrabold text-amber-300" spellcheck="false"><i class="fa-solid fa-file-export mr-1.5"></i> 4 Định Dạng Xuất Bản Đồng Bộ Tại Bước 5</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-cyan-300" spellcheck="false">1. Dashboard Kinh Doanh (.html)</div>
+              <p class="text-slate-300 mt-1" spellcheck="false">Báo cáo độc lập có biểu đồ&nbsp; tương tác, thanh tiến độ kênh bán &amp; nút In PDF.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-indigo-300" spellcheck="false">2. Báo Cáo Markdown (.md)</div>
+              <p class="text-slate-300 mt-1" spellcheck="false">Định dạng bảng chuẩn Markdown dễ dàng</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-purple-300" spellcheck="false">3. Slide Thuyết Trình (.html)</div>
+              <p class="text-slate-300 mt-1" spellcheck="false">Bộ slide trình chiếu trực tiếp quy trình làm việc, quy tắc làm sạch &amp; kết quả thực tế.</p>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/70 border border-indigo-400/20">
+              <div class="font-bold text-emerald-300" spellcheck="false">4. Tệp Dữ Liệu Sạch (.csv)</div>
+              <p class="text-slate-300 mt-1" spellcheck="false">Xuất bảng dữ liệu đã qua 6 bước làm sạch chuẩn &nbsp;mở trực tiếp bằng Excel.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card p-5 rounded-2xl space-y-3 border-l-4 border-l-cyan-400">
+          <h3 class="text-base font-extrabold text-cyan-300" spellcheck="false"><i class="fa-solid fa-robot mr-1.5"></i> Trợ Lý AI Data Copilot&nbsp;</h3>
+          <ul class="space-y-2 text-xs sm:text-sm text-slate-200 list-disc ml-4 leading-relaxed">
+            <li spellcheck="false"><b>Đồng bộ thời gian thực :</b> Tự động nhận biết người dùng đang ở bước nào (Bước 1 -&gt; Bước 5) và truy xuất trực tiếp số liệu từ bộ dữ liệu đang nạp.</li>
+            <li><b>Trả lời trực diện bằng con số thực tế:</b> Giải đáp ngay các câu hỏi về <i>"phân tích"</i>, <i>"doanh thu"</i>, <i>"lợi nhuận"</i>, <i>"tối ưu chi phí"</i>, <i>"Pareto 80/20"</i>, <i>"kênh bán Shopee/Tiktok"</i>.</li>
+            <li spellcheck="false"><b>Linh hoạt không gian làm việc:</b> Hỗ trợ mở rộng chiều ngang, thu gọn sang cạnh phải hoặc thu nhỏ xuống thanh Dock nổi góc dưới màn hình.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <i class="fa-solid fa-check-circle text-emerald-400 mr-1"></i> Tất cả các tệp xuất ra đều được lưu trữ tại thư mục <code>reports/</code> và sẵn sàng tải về hoặc mở toàn màn hình.
+      </div>
+    </section>
+
+    <!-- ================= SLIDE 8: TỔNG KẾT SỐ LIỆU THỰC TẾ HIỆN TẠI ================= -->
+    <section class="slide-item slide-card w-full rounded-[28px] p-6 sm:p-10 flex-col justify-between overflow-y-auto">
+      <div>
+        <div class="flex items-center gap-2 text-xs font-bold text-cyan-300 uppercase tracking-wider" spellcheck="false">
+          <span spellcheck="false">Slide 08 / 08</span> · <span spellcheck="false">Báo Cáo Thực Thực Tế Từ Hệ Thống&nbsp;</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1" spellcheck="false">Kết Quả Thực Thi Quy Trình Trên Dữ Liệu Mẫu</h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1" spellcheck="false">Đơn vị: <b class="text-cyan-300">Công ty Cổ phần Bán Lẻ &amp; Thời Trang Tân Tiến</b> · Ngành: <b class="text-slate-200">Bán lẻ đa kênh (Omnichannel)</b></p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 my-auto py-4">
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-emerald-400">
+          <div class="text-xs text-slate-400 font-semibold">Kết Quả Làm Sạch (Bước 3)</div>
+          <div class="text-2xl font-extrabold text-emerald-300 mt-1.5" spellcheck="false">30 / 30 dòng</div>
+          <div class="text-[11px] text-slate-400 mt-1">Đã xóa 0 dòng trùng · Xử lý 0 ô khuyết</div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-cyan-400">
+          <div class="text-xs text-slate-400 font-semibold">Tổng Doanh Thu (Bước 4)</div>
+          <div class="text-2xl font-extrabold text-cyan-300 mt-1.5" spellcheck="false">28,960,000 đ</div>
+          <div class="text-[11px] text-slate-400 mt-1">AOV bình quân: <b class="text-slate-200">965,333 đ/đơn</b></div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-indigo-400">
+          <div class="text-xs text-slate-400 font-semibold">Lợi Nhuận Gộp &amp; Biên Lãi</div>
+          <div class="text-2xl font-extrabold text-indigo-300 mt-1.5" spellcheck="false">11,580,000 đ</div>
+          <div class="text-[11px] text-slate-400 mt-1">Biên lợi nhuận gộp: <b class="text-emerald-300">40.0%</b></div>
+        </div>
+
+        <div class="sub-card p-4 rounded-2xl border-t-2 border-t-amber-400">
+          <div class="text-xs font-extrabold text-amber-300 mt-1.5 truncate" spellcheck="false">Trụ Cột Pareto &amp; Kênh Bán</div>
+          <div class="text-lg font-extrabold text-amber-300 mt-1.5 truncate" spellcheck="false">Gia dụng (42.5%)</div>
+          <div class="text-[11px] text-slate-400 mt-1">Kênh dẫn đầu: <b class="text-cyan-300">Shopee (38.0%)</b></div>
+        </div>
+      </div>
+
+      <div class="sub-card p-5 rounded-2xl border-l-4 border-l-cyan-400 space-y-2">
+        <div class="text-xs font-extrabold text-cyan-300 uppercase" spellcheck="false">Tổng Kết Giá Trị Hệ Thống</div>
+        <p class="text-xs sm:text-sm text-slate-200 leading-relaxed" spellcheck="false">
+          Quy trình 5 bước của <b>Data Analyst — Nhà phân tích dữ liệu</b> giúp chuẩn hóa hoàn toàn luồng công việc từ dữ liệu thô đa nguồn -&gt; kiểm định &amp; làm sạch tự động theo 6 quy tắc chuẩn -&gt; phân tích chuyên sâu -&gt; xuất bản báo cáo &amp; slide thuyết trình chỉ trong vài giây.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation Controls -->
+  <footer class="no-print relative z-20 flex items-center justify-between px-5 py-2.5 rounded-full slide-card">
+    <button onclick="prevSlide()" id="prevBtn" class="px-4 py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-600/80 transition cursor-pointer flex items-center gap-2">
+      <i class="fa-solid fa-arrow-left"></i> <span>Slide Trước</span>
+    </button>
+
+    <div class="text-xs text-slate-400 hidden sm:block">
+      Mẹo: Nhấn phím <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">←</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">→</kbd> hoặc <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-600">Space</kbd> để trình chiếu
+    </div>
+
+    <button onclick="nextSlide()" id="nextBtn" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-md transition cursor-pointer flex items-center gap-2">
+      <span>Slide Tiếp Theo</span> <i class="fa-solid fa-arrow-right"></i>
+    </button>
+  </footer>
+
+  <script>
+    let currentSlide = 0;
+    let isEditMode = false;
+
+    function getSlides() {
+      return document.querySelectorAll('.slide-item');
+    }
+
+    function renderDots() {
+      const slides = getSlides();
+      const totalSlides = slides.length;
+      const dotsContainer = document.getElementById('slideDots');
+      if (!dotsContainer) return;
+      dotsContainer.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = i === currentSlide
+          ? 'w-6 h-2 rounded-full bg-cyan-400 transition-all cursor-pointer'
+          : 'w-2 h-2 rounded-full bg-slate-600 hover:bg-slate-400 transition-all cursor-pointer';
+        dot.onclick = () => showSlide(i);
+        dot.title = `Đến Slide ${i + 1}`;
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function showSlide(index) {
+      const slides = getSlides();
+      const totalSlides = slides.length;
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+      currentSlide = index;
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) s.classList.add('active');
+        else s.classList.remove('active');
+      });
+      document.getElementById('slideCounter').textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+      renderDots();
+    }
+
+    function nextSlide() {
+      const totalSlides = getSlides().length;
+      if (currentSlide < totalSlides - 1) showSlide(currentSlide + 1);
+      else showSlide(0);
+    }
+
+    function prevSlide() {
+      const totalSlides = getSlides().length;
+      if (currentSlide > 0) showSlide(currentSlide - 1);
+      else showSlide(totalSlides - 1);
+    }
+
+    function applyEditableAttributes(enable) {
+      const editableSelectors = '.slide-item h1, .slide-item h2, .slide-item h3, .slide-item h4, .slide-item p, .slide-item li, .slide-item span, .slide-item div.font-bold, .slide-item div.font-extrabold';
+      document.querySelectorAll(editableSelectors).forEach(el => {
+        if (el.querySelector('i') && el.children.length > 1) return;
+        if (enable) {
+          el.setAttribute('contenteditable', 'true');
+          el.setAttribute('spellcheck', 'false');
+        } else {
+          el.removeAttribute('contenteditable');
+        }
+      });
+    }
+
+    function toggleEditMode() {
+      isEditMode = !isEditMode;
+      document.body.classList.toggle('edit-mode', isEditMode);
+      document.body.classList.toggle('select-none', !isEditMode);
+      applyEditableAttributes(isEditMode);
+
+      const editBtn = document.getElementById('toggleEditBtn');
+      const editText = document.getElementById('editBtnText');
+      const addBtn = document.getElementById('addSlideBtn');
+      const delBtn = document.getElementById('deleteSlideBtn');
+
+      if (isEditMode) {
+        editText.textContent = 'Đang Sửa (Bấm chữ bất kỳ)';
+        editBtn.className = 'px-3.5 py-1.5 rounded-full bg-amber-500 text-slate-950 text-xs font-extrabold border border-amber-300 transition cursor-pointer flex items-center gap-1.5 shadow-md';
+        addBtn.classList.remove('hidden');
+        addBtn.classList.add('flex');
+        delBtn.classList.remove('hidden');
+        delBtn.classList.add('flex');
+      } else {
+        editText.textContent = 'Bật Sửa Trực Tiếp';
+        editBtn.className = 'px-3.5 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-400/40 transition cursor-pointer flex items-center gap-1.5';
+        addBtn.classList.add('hidden');
+        addBtn.classList.remove('flex');
+        delBtn.classList.add('hidden');
+        delBtn.classList.remove('flex');
+      }
+    }
+
+    function addNewSlide() {
+      const slides = getSlides();
+      const currentEl = slides[currentSlide];
+      const clone = currentEl.cloneNode(true);
+      clone.classList.remove('active');
+      currentEl.parentNode.insertBefore(clone, currentEl.nextSibling);
+      applyEditableAttributes(isEditMode);
+      showSlide(currentSlide + 1);
+    }
+
+    function deleteCurrentSlide() {
+      const slides = getSlides();
+      if (slides.length <= 1) {
+        alert('Phải giữ lại ít nhất 1 Slide!');
+        return;
+      }
+      if (confirm('Bạn có chắc muốn xóa Slide hiện tại không?')) {
+        slides[currentSlide].remove();
+        showSlide(Math.max(0, currentSlide - 1));
+      }
+    }
+
+    function downloadEditedSlides() {
+      const wasEditing = isEditMode;
+      if (wasEditing) toggleEditMode();
+      const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      if (wasEditing) toggleEditMode();
+
+      const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Slide_Quy_Trinh_Data_Analyst_Da_Sua.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (isEditMode && (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    // -----------------------------------------------------------------
+    // OPTICS & THEME ENGINE (Hue Spectrum, Opacity, Blur, Presets)
+    // -----------------------------------------------------------------
+    function toggleSlideOptics(forceState = null) {
+      const panel = document.getElementById('slideOpticsPanel');
+      if (!panel) return;
+      if (forceState !== null) {
+        if (forceState) panel.classList.remove('hidden');
+        else panel.classList.add('hidden');
+      } else {
+        panel.classList.toggle('hidden');
+      }
+    }
+
+    function resetHueSlider() {
+      const hueSlider = document.getElementById('hueSlider');
+      const hueVal = document.getElementById('hueVal');
+      if (hueSlider) hueSlider.value = 0;
+      if (hueVal) hueVal.textContent = '0° (Gốc)';
+      document.documentElement.style.setProperty('--hue-rotate', '0deg');
+      try { localStorage.setItem('slide_hue', 0); } catch(e) {}
+    }
+
+    function setSlideTheme(themeName) {
+      const themes = ['theme-terracotta', 'theme-neon-cyber', 'theme-radiant-gold', 'theme-aurora-bright', 'theme-coral-glow', 'theme-sapphire'];
+      themes.forEach(t => document.body.classList.remove(t));
+      document.body.classList.add(themeName);
+      try {
+        localStorage.setItem('slide_theme', themeName);
+      } catch(e) {}
+    }
+
+    function initOptics() {
+      const hueSlider = document.getElementById('hueSlider');
+      if (hueSlider) {
+        hueSlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          document.documentElement.style.setProperty('--hue-rotate', `${val}deg`);
+          const valEl = document.getElementById('hueVal');
+          if (valEl) valEl.textContent = val == 0 ? '0° (Gốc)' : `${val}°`;
+          try { localStorage.setItem('slide_hue', val); } catch(e) {}
+        });
+      }
+
+      const opacitySlider = document.getElementById('opacitySlider');
+      if (opacitySlider) {
+        opacitySlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          document.documentElement.style.setProperty('--slide-opacity', (val / 100).toFixed(2));
+          const valEl = document.getElementById('opacityVal');
+          if (valEl) valEl.textContent = `${val}%`;
+          try { localStorage.setItem('slide_opacity', val); } catch(e) {}
+        });
+      }
+
+      const blurSlider = document.getElementById('blurSlider');
+      if (blurSlider) {
+        blurSlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          document.documentElement.style.setProperty('--slide-blur', `${val}px`);
+          const valEl = document.getElementById('blurVal');
+          if (valEl) valEl.textContent = `${val}px`;
+          try { localStorage.setItem('slide_blur', val); } catch(e) {}
+        });
+      }
+
+      // Restore saved Hue, Opacity, Blur & Theme
+      try {
+        const savedTheme = localStorage.getItem('slide_theme');
+        if (savedTheme) {
+          setSlideTheme(savedTheme);
+        } else {
+          setSlideTheme('theme-terracotta');
+        }
+
+        const savedHue = localStorage.getItem('slide_hue');
+        if (savedHue !== null && hueSlider) {
+          hueSlider.value = savedHue;
+          document.documentElement.style.setProperty('--hue-rotate', `${savedHue}deg`);
+          const valEl = document.getElementById('hueVal');
+          if (valEl) valEl.textContent = savedHue == 0 ? '0° (Gốc)' : `${savedHue}°`;
+        }
+
+        const savedOp = localStorage.getItem('slide_opacity');
+        if (savedOp !== null && opacitySlider) {
+          opacitySlider.value = savedOp;
+          document.documentElement.style.setProperty('--slide-opacity', (savedOp / 100).toFixed(2));
+          const valEl = document.getElementById('opacityVal');
+          if (valEl) valEl.textContent = `${savedOp}%`;
+        }
+
+        const savedBlur = localStorage.getItem('slide_blur');
+        if (savedBlur !== null && blurSlider) {
+          blurSlider.value = savedBlur;
+          document.documentElement.style.setProperty('--slide-blur', `${savedBlur}px`);
+          const valEl = document.getElementById('blurVal');
+          if (valEl) valEl.textContent = `${savedBlur}px`;
+        }
+      } catch(e) {
+        setSlideTheme('theme-terracotta');
+      }
+
+      // Click outside to close Optics Panel
+      document.addEventListener('click', (e) => {
+        const panel = document.getElementById('slideOpticsPanel');
+        const btn = document.getElementById('toggleSlideOpticsBtn');
+        if (panel && !panel.classList.contains('hidden')) {
+          if (!panel.contains(e.target) && !btn?.contains(e.target)) {
+            panel.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initOptics);
+    } else {
+      initOptics();
+    }
+
+    showSlide(0);
+  </script>
+</body>
+</html>
